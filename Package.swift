@@ -1,32 +1,32 @@
-// swift-tools-version: 6.4
+// swift-tools-version: 6.0
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 
 let package = Package(
-    name: "figranium-swift",
+    name: "Figranium",
+    platforms: [
+        .macOS(.v13),
+        .iOS(.v16),
+        .tvOS(.v16),
+        .watchOS(.v9),
+    ],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
-            name: "figranium-swift",
-            targets: ["figranium_swift"]
+            name: "Figranium",
+            targets: ["Figranium"]
         ),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "figranium_swift",
-            swiftSettings: [
-                .enableUpcomingFeature("ApproachableConcurrency"),
-            ],
+            name: "Figranium"
         ),
         .testTarget(
-            name: "figranium_swiftTests",
-            dependencies: ["figranium_swift"],
-            swiftSettings: [
-                .enableUpcomingFeature("ApproachableConcurrency"),
-            ],
+            name: "FigraniumTests",
+            dependencies: ["Figranium"]
         ),
     ]
 )
