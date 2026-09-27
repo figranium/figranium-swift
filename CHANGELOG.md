@@ -2,9 +2,9 @@
 
 All notable changes to Figranium Swift are documented in this file.
 
-## [0.1.0-alpha.1] - 2026-09-27
+## [0.1.0] - 2026-09-27
 
-First public preview of the official Figranium Swift SDK.
+First stable release of the official Figranium Swift SDK.
 
 ### Added
 
@@ -29,7 +29,3 @@ First public preview of the official Figranium Swift SDK.
 
 - Replaced the generated Swift package scaffold with the `Figranium` module and public SDK API.
 - Lowered the package tools version from Swift 6.4 to Swift 6.0 so it builds with the available Swift/Xcode toolchains.
-
-### Notes
-
-- This is an alpha release. The package builds and its unit tests pass; live integration parity against a running Figranium server and host-app verification for App Intents and Foundation Models remain recommended before the stable `0.1.0` release.
