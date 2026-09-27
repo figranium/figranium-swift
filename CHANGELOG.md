@@ -4,7 +4,7 @@ All notable changes to Figranium Swift are documented in this file.
 
 ## [0.1.0] - 2026-09-27
 
-First stable release of the official Figranium Swift SDK.
+First release of the official Figranium Swift SDK.
 
 ### Added
 
