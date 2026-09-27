@@ -1,4 +1,5 @@
 import Testing
+import Foundation
 @testable import Figranium
 
 @Suite("Figranium SDK") struct FigraniumTests {
