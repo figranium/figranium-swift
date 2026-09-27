@@ -4,6 +4,9 @@
 
 # Figranium Swift SDK
 
+[![Platforms](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Ffigranium%2Ffigranium-swift%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/figranium/figranium-swift)
+[![Swift versions](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Ffigranium%2Ffigranium-swift%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/figranium/figranium-swift)
+
 Official Swift SDK for [Figranium](https://github.com/figranium/figranium), the self-hosted browser automation and web-scraping platform.
 
 - Async/await-first API built on `URLSession`
