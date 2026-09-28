@@ -3,12 +3,12 @@
 
   <h1>Figranium Swift SDK</h1>
 
-  <a href="https://swiftpackageindex.com/figranium/figranium-swift"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Ffigranium%2Ffigranium-swift%2Fbadge%3Ftype%3Dplatforms&style=for-the-badge" alt="Platforms"></a>
-  <a href="https://swiftpackageindex.com/figranium/figranium-swift"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Ffigranium%2Ffigranium-swift%2Fbadge%3Ftype%3Dswift-versions&style=for-the-badge" alt="Swift versions"></a>
+  <a href="https://swiftpackageindex.com/figranium/figranium-swift" target="_blank"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Ffigranium%2Ffigranium-swift%2Fbadge%3Ftype%3Dplatforms&style=for-the-badge" alt="Platforms"></a>
+  <a href="https://swiftpackageindex.com/figranium/figranium-swift" target="_blank"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Ffigranium%2Ffigranium-swift%2Fbadge%3Ftype%3Dswift-versions&style=for-the-badge" alt="Swift versions"></a>
 
   <p><strong>Official Swift SDK for Figranium, the self-hosted browser automation and web-scraping platform.</strong></p>
 
-  <p><a href="https://figranium.dev/docs"><strong>Documentation</strong></a></p>
+  <p><a href="https://figranium.dev/docs" target="_blank"><strong>Documentation</strong></a></p>
 </div>
 
 - Async/await-first API built on `URLSession`
