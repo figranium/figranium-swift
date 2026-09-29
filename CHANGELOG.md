@@ -2,6 +2,19 @@
 
 All notable changes to Figranium Swift are documented in this file.
 
+## [0.2.0] - 2026-09-29
+
+### Added
+
+- Public DocC-compatible documentation comments across the SDK's public API.
+- Swift Package Index metadata linking directly to the hosted Swift SDK documentation.
+
+### Changed
+
+- Pointed the README documentation link directly to the Swift SDK docs.
+- Updated the Swift Package Manager installation example to the current release line.
+- Adopted normal semantic version progression for releases: new functionality increments the minor version while patch releases are reserved for backwards-compatible fixes.
+
 ## [0.1.0] - 2026-09-27
 
 First release of the official Figranium Swift SDK.
