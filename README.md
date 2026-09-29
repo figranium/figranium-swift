@@ -8,7 +8,7 @@
 
   <p><strong>Official Swift SDK for Figranium, the self-hosted browser automation and web-scraping platform.</strong></p>
 
-  <p><a href="https://figranium.dev/docs" target="_blank"><strong>Documentation</strong></a></p>
+  <p><a href="https://figranium.dev/docs/sdk/swift" target="_blank"><strong>Documentation</strong></a></p>
 </div>
 
 - Async/await-first API built on `URLSession`
