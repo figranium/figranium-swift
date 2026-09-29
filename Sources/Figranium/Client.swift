@@ -1,31 +1,46 @@
 import Foundation
 
+/// An error returned by the Figranium server or SDK transport layer.
 public struct FigraniumError: Error, Sendable, LocalizedError {
+    /// The message value.
     public var message: String; public var status: Int; public var code: String?; public var details: JSONValue?; public var requestID: String?
+    /// The error description value.
     public var errorDescription: String? { message }
     init(message: String, status: Int = 0, code: String? = nil, details: JSONValue? = nil, requestID: String? = nil) { self.message = message; self.status = status; self.code = code; self.details = details; self.requestID = requestID }
 }
 
+/// Authentication methods supported by the Figranium client.
 public enum FigraniumAuthentication: Sendable { case apiKey(String, header: String = "authorization"), session, none }
 
+/// Client for connecting to a self-hosted Figranium instance.
 public final class Figranium: @unchecked Sendable {
     let baseURL: URL; let authentication: FigraniumAuthentication; let defaultHeaders: [String: String]; let timeout: TimeInterval; let session: URLSession
+    /// The auth value.
     public lazy var auth = AuthResource(client: self); public lazy var tasks = TasksResource(client: self); public lazy var executions = ExecutionsResource(client: self)
+    /// The schedules value.
     public lazy var schedules = SchedulesResource(client: self); public lazy var captures = CapturesResource(client: self); public lazy var cabinets = CabinetsResource(client: self)
+    /// The credentials value.
     public lazy var credentials = CredentialsResource(client: self); public lazy var browser = BrowserResource(client: self); public lazy var settings = SettingsResource(client: self)
+    /// The execution value.
     public lazy var execution = ExecutionResource(client: self); public lazy var health = HealthResource(client: self)
 
+    /// Creates a new Figranium.
     public init(baseURL: URL = URL(string: "http://localhost:11345")!, authentication: FigraniumAuthentication = .none, headers: [String: String] = [:], timeout: TimeInterval = 30, session: URLSession = .shared) {
         precondition(["http", "https"].contains(baseURL.scheme?.lowercased()), "baseURL must use http or https")
         self.baseURL = baseURL; self.authentication = authentication; self.defaultHeaders = headers; self.timeout = timeout; self.session = session
     }
+    /// Creates a new Figranium.
     public convenience init(baseURL: String = "http://localhost:11345", apiKey: String? = nil, apiKeyHeader: String = "authorization", timeout: TimeInterval = 30) {
         guard let url = URL(string: baseURL.trimmingCharacters(in: .whitespacesAndNewlines)) else { preconditionFailure("baseURL must be a valid URL") }
         self.init(baseURL: url, authentication: apiKey.map { .apiKey($0, header: apiKeyHeader) } ?? .none, timeout: timeout)
     }
+    /// Executes a saved Figranium task and decodes its structured result.
     public func runTask<Value: Codable & Sendable>(_ id: String, input: ExecuteTaskOptions = .init(), options: RequestOptions = .init()) async throws -> ExecutionResult<Value> { try await tasks.run(id, input: input, options: options) }
+    /// Performs the scrape operation.
     public func scrape<Value: Codable & Sendable>(_ input: JSONObject, options: RequestOptions = .init()) async throws -> ExecutionResult<Value> { try await execution.scrape(input, options: options) }
+    /// Performs the agent operation.
     public func agent<Value: Codable & Sendable>(_ input: JSONObject, options: RequestOptions = .init()) async throws -> ExecutionResult<Value> { try await execution.agent(input, options: options) }
+    /// Performs the headful operation.
     public func headful<Value: Codable & Sendable>(_ input: JSONObject, options: RequestOptions = .init()) async throws -> ExecutionResult<Value> { try await execution.headful(input, options: options) }
 
     func request<Value: Decodable & Sendable>(_ method: String, _ path: String, query: [String: String] = [:], options: RequestOptions = .init()) async throws -> Value {
