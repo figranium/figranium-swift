@@ -38,7 +38,7 @@ Or add it with Swift Package Manager:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/figranium/figranium-swift.git", from: "0.1.0")
+    .package(url: "https://github.com/figranium/figranium-swift.git", from: "0.2.0")
 ]
 ```
 
