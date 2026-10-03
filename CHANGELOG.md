@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0] - 2026-10-03
+
+### Added
+
+- v0.20 Templates API resource for catalog listing, paginated search, template details and successful-import tracking.
+
+
 All notable changes to Figranium Swift are documented in this file.
 
 ## [0.2.0] - 2026-09-29
