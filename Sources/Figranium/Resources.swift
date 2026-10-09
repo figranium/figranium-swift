@@ -1,19 +1,7 @@
 import Foundation
 
 /// API resource for auth operations.
-public struct AuthResource: Sendable { let client: Figranium
-    /// Performs the check setup operation.
-    public func checkSetup(options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("GET", "/api/auth/check-setup", options: options) }
-    /// Performs the setup operation.
-    public func setup(name: String, email: String, password: String, options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("POST", "/api/auth/setup", body: ["name": name, "email": email, "password": password], options: options) }
-    /// Performs the login operation.
-    public func login(email: String, password: String, options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("POST", "/api/auth/login", body: ["email": email, "password": password], options: options) }
-    /// Performs the logout operation.
-    public func logout(options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("POST", "/api/auth/logout", options: options) }
-    /// Performs the me operation.
-    public func me(options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("GET", "/api/auth/me", options: options) }
-}
-/// API resource for tasks operations.
+
 public struct TasksResource: Sendable { let client: Figranium
     /// Performs the list operation.
     public func list(options: RequestOptions = .init()) async throws -> [Task] { try await client.request("GET", "/api/tasks", options: options) }
@@ -83,13 +71,10 @@ public struct CapturesResource: Sendable { let client: Figranium
     /// Performs the delete operation.
     public func delete(_ name: String, options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("DELETE", "/api/data/captures/\(pathID(name))", options: options) }
     /// Performs the cookies operation.
-    public func cookies(options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("GET", "/api/data/cookies", options: options) }
     /// Performs the delete cookie operation.
-    public func deleteCookie(name: String, domain: String? = nil, path: String? = nil, options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("POST", "/api/data/cookies/delete", body: ["name": name, "domain": domain, "path": path], options: options) }
     /// Performs the clear operation.
     public func clear(options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("POST", "/api/data/clear-screenshots", options: options) }
     /// Performs the clear cookies operation.
-    public func clearCookies(options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("POST", "/api/data/clear-cookies", options: options) }
 }
 /// API resource for cabinets operations.
 public struct CabinetsResource: Sendable { let client: Figranium
@@ -117,77 +102,9 @@ public struct CabinetsResource: Sendable { let client: Figranium
     public func downloadURL(cabinetID: String, itemID: String) -> URL { client.baseURL.appendingPathComponent("api/cabinets/\(pathID(cabinetID))/items/\(pathID(itemID))/download") }
 }
 /// API resource for credentials operations.
-public struct CredentialsResource: Sendable { let client: Figranium
-    /// Performs the list operation.
-    public func list(options: RequestOptions = .init()) async throws -> [Credential] { try await client.request("GET", "/api/credentials", options: options) }
-    /// Performs the create operation.
-    public func create(_ input: CredentialInput, options: RequestOptions = .init()) async throws -> Credential { try await client.request("POST", "/api/credentials", body: input, options: options) }
-    /// Performs the update operation.
-    public func update(_ id: String, input: CredentialInput, options: RequestOptions = .init()) async throws -> Credential { try await client.request("PUT", "/api/credentials/\(pathID(id))", body: input, options: options) }
-    /// Performs the delete operation.
-    public func delete(_ id: String, options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("DELETE", "/api/credentials/\(pathID(id))", options: options) }
-    /// Performs the baserow databases operation.
-    public func baserowDatabases(_ id: String, options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("GET", "/api/credentials/\(pathID(id))/proxy/baserow/databases", options: options) }
-    /// Performs the baserow tables operation.
-    public func baserowTables(_ id: String, databaseID: String, options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("GET", "/api/credentials/\(pathID(id))/proxy/baserow/databases/\(pathID(databaseID))/tables", options: options) }
-}
-/// API resource for browser operations.
-public struct BrowserResource: Sendable { let client: Figranium
-    /// Performs the open operation.
-    public func open(_ input: JSONObject = [:], options: RequestOptions = .init()) async throws -> BrowserSession { try await client.request("POST", "/api/browser/open", body: input, options: options) }
-    /// Performs the highlight operation.
-    public func highlight(_ input: JSONObject, options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("POST", "/api/inspector/highlight", body: input, options: options) }
-    /// Performs the stop headful operation.
-    public func stopHeadful(options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("POST", "/headful/stop", options: options) }
-    /// Performs the headful status operation.
-    public func headfulStatus(options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("GET", "/api/headful/status", options: options) }
-    /// Performs the inspect operation.
-    public func inspect(options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("POST", "/api/headful/inspect", options: options) }
-    /// Performs the vnc password operation.
-    public func vncPassword(options: RequestOptions = .init()) async throws -> String { struct Response: Codable, Sendable { let password: String }; let response: Response = try await client.request("GET", "/api/headful/vnc-password", options: options); return response.password }
-    /// Opens a server-sent event stream for live Figranium updates.
-    public func selectorStream(options: RequestOptions = .init()) -> AsyncThrowingStream<StreamEvent<JSONValue>, Error> { client.stream("/api/headful/selector_stream", options: options) }
-}
-/// API resource for settings operations.
-public struct SettingsResource: Sendable { let client: Figranium
-    /// Performs the get apikey operation.
-    public func getAPIKey(options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("GET", "/api/settings/api-key", options: options) }
-    /// Performs the set apikey operation.
-    public func setAPIKey(_ key: String? = nil, options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("POST", "/api/settings/api-key", body: ["apiKey": key], options: options) }
-    /// Performs the get user agent operation.
-    public func getUserAgent(options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("GET", "/api/settings/user-agent", options: options) }
-    /// Performs the set user agent operation.
-    public func setUserAgent(_ selection: String?, options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("POST", "/api/settings/user-agent", body: ["selection": selection], options: options) }
-    /// Performs the get aimodels operation.
-    public func getAIModels(options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("GET", "/api/settings/ai-models", options: options) }
-    /// Performs the set aimodels operation.
-    public func setAIModels(_ models: JSONObject, options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("POST", "/api/settings/ai-models", body: models, options: options) }
-    /// Performs the get theme operation.
-    public func getTheme(options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("GET", "/api/settings/theme", options: options) }
-    /// Performs the set theme operation.
-    public func setTheme(_ theme: String, options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("POST", "/api/settings/theme", body: ["theme": theme], options: options) }
-    /// Performs the list proxies operation.
-    public func listProxies(options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("GET", "/api/settings/proxies", options: options) }
-    /// Performs the add proxy operation.
-    public func addProxy(_ proxy: ProxyInput, options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("POST", "/api/settings/proxies", body: proxy, options: options) }
-    /// Performs the import proxies operation.
-    public func importProxies(_ proxies: [ProxyInput], options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("POST", "/api/settings/proxies/import", body: ["proxies": proxies], options: options) }
-    /// Performs the update proxy operation.
-    public func updateProxy(_ id: String, proxy: ProxyInput, options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("PUT", "/api/settings/proxies/\(pathID(id))", body: proxy, options: options) }
-    /// Performs the delete proxy operation.
-    public func deleteProxy(_ id: String, options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("DELETE", "/api/settings/proxies/\(pathID(id))", options: options) }
-    /// Performs the delete proxies operation.
-    public func deleteProxies(_ ids: [String], options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("DELETE", "/api/settings/proxies", body: ["ids": ids], options: options) }
-    /// Performs the set default proxy operation.
-    public func setDefaultProxy(_ id: String?, options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("POST", "/api/settings/proxies/default", body: ["id": id], options: options) }
-    /// Performs the set proxy rotation operation.
-    public func setProxyRotation(_ input: JSONObject, options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("POST", "/api/settings/proxies/rotation", body: input, options: options) }
-    /// Performs the provider keys operation.
-    public func providerKeys(_ provider: String, options: RequestOptions = .init()) async throws -> JSONObject { let path = provider == "openai" ? "openai-api-key" : "\(provider)-api-key"; return try await client.request("GET", "/api/settings/\(path)", options: options) }
-    /// Performs the set provider keys operation.
-    public func setProviderKeys(_ provider: String, keys: [String], options: RequestOptions = .init()) async throws -> JSONObject { let path = provider == "openai" ? "openai-api-key" : "\(provider)-api-key"; let key = provider == "openai" ? "openAiApiKeys" : "\(provider)ApiKeys"; return try await client.request("POST", "/api/settings/\(path)", body: [key: keys], options: options) }
-}
-/// API resource for execution operations.
+
+
+
 public struct ExecutionResource: Sendable { let client: Figranium
     /// Performs the scrape operation.
     public func scrape<Value: Codable & Sendable>(_ input: JSONObject, options: RequestOptions = .init()) async throws -> ExecutionResult<Value> { try await client.request("POST", "/scrape", body: input, options: options) }
