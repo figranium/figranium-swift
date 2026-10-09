@@ -1,0 +1,12 @@
+name: Validate automation-only SDK
+on:
+  push:
+    branches: [refactor/automation-only-sdk]
+  pull_request:
+    branches: [main]
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift test

@@ -16,11 +16,11 @@ public enum FigraniumAuthentication: Sendable { case apiKey(String, header: Stri
 public final class Figranium: @unchecked Sendable {
     let baseURL: URL; let authentication: FigraniumAuthentication; let defaultHeaders: [String: String]; let timeout: TimeInterval; let session: URLSession
     /// The auth value.
-    public lazy var auth = AuthResource(client: self); public lazy var tasks = TasksResource(client: self); public lazy var executions = ExecutionsResource(client: self)
+    public lazy var tasks = TasksResource(client: self); public lazy var executions = ExecutionsResource(client: self)
     /// The schedules value.
     public lazy var schedules = SchedulesResource(client: self); public lazy var captures = CapturesResource(client: self); public lazy var cabinets = CabinetsResource(client: self)
     /// The credentials value.
-    public lazy var credentials = CredentialsResource(client: self); public lazy var browser = BrowserResource(client: self); public lazy var settings = SettingsResource(client: self)
+    
     /// The execution value.
     public lazy var execution = ExecutionResource(client: self); public lazy var health = HealthResource(client: self)
 
