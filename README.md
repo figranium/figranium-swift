@@ -99,6 +99,24 @@ let result: ExecutionResult<JSONValue> = try await client.runTask(
 
 `variable("query")` creates Figranium’s `{$query}` template token. Action builders assign unique action IDs automatically.
 
+For v0.21+ Tasks, select a named cookie state or explicitly request a fresh state:
+
+```swift
+var statefulTask = task
+statefulTask.cookieStateId = .named("cookie-state-id") // reuse a saved state
+statefulTask.cookieStateId = .fresh                  // send JSON null for a fresh state
+// Leave cookieStateId nil to omit it and use the instance default.
+
+statefulTask.output = TaskOutput(
+    credentialId: "baserow-credential-id",
+    tableId: "table-id",
+    databaseId: "database-id",
+    dedicated: true
+)
+```
+
+The legacy `statelessExecution` option is deprecated. Scoped API keys must have the appropriate Task permissions and cannot bypass their Task allowlists.
+
 ## Action builders
 
 `Actions` supports navigation, clicks, forms, extraction, control flow, HTTP, CAPTCHA handling, and cabinet uploads:
@@ -184,20 +202,9 @@ let result: ExecutionResult<JSONValue> = try await client.scrape([
 ])
 ```
 
-## Session-only administration
+## Administration and authentication
 
-Figranium’s settings endpoints require an authenticated user session rather than an API key:
-
-```swift
-let admin = Figranium(
-    baseURL: "https://figranium.example",
-    authentication: .session
-)
-
-let theme = try await admin.settings.getTheme()
-```
-
-Your app must supply and persist session cookies. API-key authentication is recommended for most native and server integrations.
+Use the Figranium workspace UI with an authenticated user session to manage settings, scoped API keys, 1Password credentials, cookie states, Baserow connections, imports/exports, and Cloud sign-in. The Swift SDK does not expose a `settings` resource. Its API-key client is intended for permitted automation operations; Task-allowlisted keys cannot access unrelated global resources.
 
 ## App Intents and Shortcuts
 
