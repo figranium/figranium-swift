@@ -96,10 +96,21 @@ public struct Schedule: Codable, Sendable, Equatable {
 public struct TaskOutput: Codable, Sendable, Equatable {
     /// The provider value.
     public var provider, credentialId, tableId: String
+    /// Optional Baserow database ID, used with the table ID when configured.
+    public var databaseId: String?
+    /// Whether this output uses a dedicated Baserow table.
+    public var dedicated: Bool?
     /// The on error value.
     public var onError: String?
     /// Creates a new TaskOutput.
-    public init(provider: String = "baserow", credentialId: String, tableId: String, onError: String? = nil) { self.provider = provider; self.credentialId = credentialId; self.tableId = tableId; self.onError = onError }
+    public init(provider: String = "baserow", credentialId: String, tableId: String, onError: String? = nil, databaseId: String? = nil, dedicated: Bool? = nil) {
+        self.provider = provider
+        self.credentialId = credentialId
+        self.tableId = tableId
+        self.onError = onError
+        self.databaseId = databaseId
+        self.dedicated = dedicated
+    }
 }
 
 /// A task action. Every field defined by AGENT_SPEC.md is represented here; use `Actions` for ergonomic construction.
@@ -121,6 +132,30 @@ public struct Action: Codable, Sendable, Equatable, Identifiable {
     /// Creates a new Action.
     public init(type: String, id: String? = nil, disabled: Bool? = nil, selector: String? = nil, targetSelector: String? = nil, value: String? = nil, clickType: String? = nil, typeMode: String? = nil, key: String? = nil, varName: String? = nil, method: String? = nil, headers: String? = nil, body: String? = nil, conditionVar: String? = nil, conditionVarType: String? = nil, conditionOp: String? = nil, conditionValue: String? = nil, captchaType: String? = nil, timeout: Double? = nil, cabinetId: String? = nil, markAsUploaded: Bool? = nil) {
         self.type = type; self.id = id; self.disabled = disabled; self.selector = selector; self.targetSelector = targetSelector; self.value = value; self.clickType = clickType; self.typeMode = typeMode; self.key = key; self.varName = varName; self.method = method; self.headers = headers; self.body = body; self.conditionVar = conditionVar; self.conditionVarType = conditionVarType; self.conditionOp = conditionOp; self.conditionValue = conditionValue; self.captchaType = captchaType; self.timeout = timeout; self.cabinetId = cabinetId; self.markAsUploaded = markAsUploaded
+    }
+}
+
+/// Cookie-state selection for a Task. Omit the property to use the instance default;
+/// use `.fresh` to send JSON null, or `.named(id)` to reuse a named state.
+public enum CookieStateSelection: Codable, Sendable, Equatable {
+    case named(String)
+    case fresh
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if container.decodeNil() {
+            self = .fresh
+        } else {
+            self = .named(try container.decode(String.self))
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        switch self {
+        case .named(let id): try container.encode(id)
+        case .fresh: try container.encodeNil()
+        }
     }
 }
 
@@ -146,6 +181,8 @@ public struct Task: Codable, Sendable, Equatable, Identifiable {
     public var includeHtml, includeShadowDom, disableRecording, statelessExecution: Bool?
     /// The download cabinet id value.
     public var downloadCabinetId, cabinetId: String?
+    /// Named cookie state, explicit fresh state, or nil to inherit the instance default.
+    public var cookieStateId: CookieStateSelection?
     /// Creates a new Task.
     public init(name: String, url: String, mode: String, description: String = "", actions: [Action]? = nil, variables: [String: TaskVariable]? = nil) {
         self.name = name; self.url = url; self.mode = mode; self.description = description; self.actions = actions; self.variables = variables
