@@ -16,6 +16,7 @@ public enum FigraniumAuthentication: Sendable { case apiKey(String, header: Stri
 public final class Figranium: @unchecked Sendable {
     let baseURL: URL; let authentication: FigraniumAuthentication; let defaultHeaders: [String: String]; let timeout: TimeInterval; let session: URLSession
     /// The auth value.
+    public lazy var cookieStates = CookieStatesResource(client: self)
     public lazy var tasks = TasksResource(client: self); public lazy var executions = ExecutionsResource(client: self)
     /// The schedules value.
     public lazy var schedules = SchedulesResource(client: self); public lazy var captures = CapturesResource(client: self); public lazy var cabinets = CabinetsResource(client: self)
@@ -50,12 +51,21 @@ public final class Figranium: @unchecked Sendable {
         try await requestInternal(method, path, body: try JSONEncoder().encode(body), query: query, options: options)
     }
     private func requestInternal<Value: Decodable & Sendable>(_ method: String, _ path: String, body: Data?, query: [String: String], options: RequestOptions) async throws -> Value {
-        var components = URLComponents(url: baseURL.appendingPathComponent(path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))), resolvingAgainstBaseURL: false)!
+        var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)!
+        let encodedPath = path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let prefix = components.percentEncodedPath
+        components.percentEncodedPath = (prefix.hasSuffix("/") ? prefix : prefix + "/") + encodedPath
         if !query.isEmpty { components.queryItems = query.compactMap { $0.value.isEmpty ? nil : URLQueryItem(name: $0.key, value: $0.value) } }
         guard let url = components.url else { throw FigraniumError(message: "Unable to construct Figranium request URL") }
         var request = URLRequest(url: url); request.httpMethod = method; request.timeoutInterval = options.timeout ?? timeout
         var headers = defaultHeaders; headers["accept"] = "application/json"; options.headers.forEach { headers[$0.key] = $0.value }
         if case let .apiKey(key, header) = authentication { headers[header] = header.lowercased() == "authorization" ? "Bearer \(key)" : key }
+        if case .session = authentication, !["GET", "HEAD", "OPTIONS"].contains(method.uppercased()) {
+            let provided = Set(headers.keys.map { $0.lowercased() })
+            if provided.isDisjoint(with: ["origin", "referer", "x-requested-with"]) {
+                headers["X-Requested-With"] = "XMLHttpRequest"
+            }
+        }
         if let body { headers["content-type"] = headers["content-type"] ?? "application/json"; request.httpBody = body }
         headers.forEach { request.setValue($0.value, forHTTPHeaderField: $0.key) }
         do {
@@ -82,4 +92,7 @@ public final class Figranium: @unchecked Sendable {
     private static func sse(_ lines: [String]) -> StreamEvent<JSONValue>? { let data = lines.compactMap { $0.hasPrefix("data:") ? String($0.dropFirst(5)).trimmingCharacters(in: .whitespaces) : nil }.joined(separator: "\n"); guard !data.isEmpty else { return nil }; let value = (try? JSONDecoder().decode(JSONValue.self, from: Data(data.utf8))) ?? .string(data); return .init(data: value, event: lines.first(where: { $0.hasPrefix("event:") }).map { String($0.dropFirst(6)).trimmingCharacters(in: .whitespaces) }, id: lines.first(where: { $0.hasPrefix("id:") }).map { String($0.dropFirst(3)).trimmingCharacters(in: .whitespaces) }, retry: lines.first(where: { $0.hasPrefix("retry:") }).flatMap { Int($0.dropFirst(6).trimmingCharacters(in: .whitespaces)) }, raw: data) }
     private func error(from data: Data, response: HTTPURLResponse) -> FigraniumError { let object = try? JSONDecoder().decode(JSONObject.self, from: data); let message = object?["message"].flatMap { if case .string(let value) = $0 { value } else { nil } } ?? object?["error"].flatMap { if case .string(let value) = $0 { value } else { nil } } ?? String(data: data, encoding: .utf8) ?? "Figranium request failed"; let code = object?["error"].flatMap { if case .string(let value) = $0 { value } else { nil } }; return .init(message: message, status: response.statusCode, code: code, details: object?["details"] ?? object?["detail"], requestID: response.value(forHTTPHeaderField: "x-request-id")) }
 }
-func pathID(_ value: String) -> String { value.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? value }
+func pathID(_ value: String) -> String {
+    let allowed = CharacterSet.urlPathAllowed.subtracting(CharacterSet(charactersIn: "/?#%"))
+    return value.addingPercentEncoding(withAllowedCharacters: allowed) ?? value
+}

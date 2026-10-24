@@ -2,6 +2,38 @@ import Foundation
 
 /// API resource for auth operations.
 
+/// Session-only named browser storage states introduced in Figranium v0.21.
+public struct CookieStatesResource: Sendable {
+    let client: Figranium
+
+    public func list(options: RequestOptions = .init()) async throws -> JSONObject {
+        try await client.request("GET", "/api/cookie-states", options: options)
+    }
+
+    public func get(_ id: String, options: RequestOptions = .init()) async throws -> JSONObject {
+        try await client.request("GET", "/api/cookie-states/\(pathID(id))", options: options)
+    }
+
+    public func create(name: String, state: JSONObject, options: RequestOptions = .init()) async throws -> JSONObject {
+        let input: JSONObject = ["name": .string(name), "state": .object(state)]
+        return try await client.request("POST", "/api/cookie-states", body: input, options: options)
+    }
+
+    public func rename(_ id: String, name: String, options: RequestOptions = .init()) async throws -> JSONObject {
+        let input: JSONObject = ["name": .string(name)]
+        return try await client.request("PATCH", "/api/cookie-states/\(pathID(id))", body: input, options: options)
+    }
+
+    public func update(_ id: String, state: JSONObject, options: RequestOptions = .init()) async throws -> JSONObject {
+        let input: JSONObject = ["state": .object(state)]
+        return try await client.request("PATCH", "/api/cookie-states/\(pathID(id))", body: input, options: options)
+    }
+
+    public func delete(_ id: String, options: RequestOptions = .init()) async throws -> JSONObject {
+        try await client.request("DELETE", "/api/cookie-states/\(pathID(id))", options: options)
+    }
+}
+
 public struct TasksResource: Sendable { let client: Figranium
     /// Performs the list operation.
     public func list(options: RequestOptions = .init()) async throws -> [Task] { try await client.request("GET", "/api/tasks", options: options) }
