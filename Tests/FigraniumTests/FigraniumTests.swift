@@ -2,6 +2,24 @@ import Testing
 import Foundation
 @testable import Figranium
 
+
+private final class RecordingURLProtocol: URLProtocol, @unchecked Sendable {
+    nonisolated(unsafe) static var requests: [URLRequest] = []
+
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+
+    override func startLoading() {
+        Self.requests.append(request)
+        let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: ["content-type": "application/json"])!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: Data("{\"ok\":true}".utf8))
+        client?.urlProtocolDidFinishLoading(self)
+    }
+
+    override func stopLoading() {}
+}
+
 @Suite("Figranium SDK") struct FigraniumTests {
     @Test func variableTemplateAndActionIDs() {
         #expect(variable("query") == "{$query}")
@@ -35,6 +53,29 @@ import Foundation
         let named = try JSONSerialization.jsonObject(with: JSONEncoder().encode(task)) as? [String: Any]
         #expect(named?["cookieStateId"] as? String == "cookie-1")
         #expect(try JSONDecoder().decode(CookieStateSelection.self, from: Data("null".utf8)) == .fresh)
+    }
+
+    @Test func sessionCookieStatesPreserveEncodedIDsAndCSRFHint() async throws {
+        #expect(pathID("state/1") == "state%2F1")
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [RecordingURLProtocol.self]
+        let session = URLSession(configuration: configuration)
+        defer { session.invalidateAndCancel() }
+        RecordingURLProtocol.requests = []
+
+        let client = Figranium(
+            baseURL: URL(string: "http://localhost:11345")!,
+            authentication: .session,
+            session: session
+        )
+        let state: JSONObject = ["cookies": .array([]), "origins": .array([])]
+        let _: JSONObject = try await client.cookieStates.create(name: "login", state: state)
+        let _: JSONObject = try await client.cookieStates.delete("state/1")
+
+        #expect(RecordingURLProtocol.requests.count == 2)
+        #expect(RecordingURLProtocol.requests[0].value(forHTTPHeaderField: "X-Requested-With") == "XMLHttpRequest")
+        #expect(RecordingURLProtocol.requests[1].value(forHTTPHeaderField: "X-Requested-With") == "XMLHttpRequest")
+        #expect(RecordingURLProtocol.requests[1].url?.absoluteString == "http://localhost:11345/api/cookie-states/state%2F1")
     }
 
     @Test func jsonValueRoundTrip() throws {
