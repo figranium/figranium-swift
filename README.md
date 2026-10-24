@@ -140,7 +140,7 @@ For advanced fields, construct `Action` directly. `Task`, `Action`, `Schedule`, 
 
 ## Streams and execution watching
 
-Execution events and selector picks are `AsyncThrowingStream`s and stop when their consuming task is cancelled.
+Execution events are `AsyncThrowingStream`s and stop when their consuming task is cancelled.
 
 ```swift
 for try await event in client.executions.stream() {
@@ -182,9 +182,10 @@ let tasks = try await client.tasks.list(
 | Resource | Purpose |
 | --- | --- |
 | `tasks` | Save, update, delete, version, generate, and execute tasks |
+| `cookieStates` | Session-only list/get/create/rename/update/delete named browser storage states |
 | `executions` | List, inspect, stop, delete, clear, stream, and watch runs |
 | `schedules` | Configure, describe, disable, and inspect schedules |
-| `captures` | List/delete recordings and screenshots; manage cookies |
+| `captures` | List/delete recordings and screenshots |
 | `cabinets` | Manage intercepted downloads and other files |
 | `execution` | Direct `scrape`, `agent`, and `headful` execution endpoints |
 | `health` | Service health check |
@@ -204,7 +205,22 @@ let result: ExecutionResult<JSONValue> = try await client.scrape([
 
 ## Administration and authentication
 
-Use the Figranium workspace UI with an authenticated user session to manage settings, scoped API keys, 1Password credentials, cookie states, Baserow connections, imports/exports, and Cloud sign-in. The Swift SDK does not expose a `settings` resource. Its API-key client is intended for permitted automation operations; Task-allowlisted keys cannot access unrelated global resources.
+Named cookie states are available through a workspace-authenticated `URLSession` and `authentication: .session`:
+
+```swift
+let client = Figranium(
+    baseURL: URL(string: "https://figranium.example")!,
+    authentication: .session,
+    session: authenticatedURLSession // provide a session with workspace cookies
+)
+let states = try await client.cookieStates.list()
+let _: JSONObject = try await client.cookieStates.create(
+    name: "login",
+    state: ["cookies": .array([]), "origins": .array([])]
+)
+```
+
+The SDK does not perform interactive login or acquire workspace cookies. It adds a CSRF hint to session-authenticated mutations when no Origin or Referer is supplied. Scoped API keys cannot administer cookie states. Manage settings, scoped API keys, 1Password credentials, Baserow connections, imports/exports, and Cloud sign-in in the Figranium workspace UI. The Swift SDK does not expose a `settings` resource; Task-allowlisted keys cannot access unrelated global resources.
 
 ## App Intents and Shortcuts
 
