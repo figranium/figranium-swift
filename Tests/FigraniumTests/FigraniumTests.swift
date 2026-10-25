@@ -13,7 +13,16 @@ private final class RecordingURLProtocol: URLProtocol, @unchecked Sendable {
         Self.requests.append(request)
         let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: ["content-type": "application/json"])!
         client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
-        client?.urlProtocol(self, didLoad: Data("{\"ok\":true}".utf8))
+        let path = request.url?.path ?? ""
+        let body: String
+        if path == "/api/executions" || path == "/api/executions/list" {
+            body = "{\\"executions\\":[{\\"id\\":\\"run-1\\",\\"timestamp\\":1,\\"status\\":200}]}"
+        } else if path.hasSuffix("/result") {
+            body = "{\\"result\\":{\\"rows\\":[1]}}"
+        } else {
+            body = "{\\"ok\\":true}"
+        }
+        client?.urlProtocol(self, didLoad: Data(body.utf8))
         client?.urlProtocolDidFinishLoading(self)
     }
 
