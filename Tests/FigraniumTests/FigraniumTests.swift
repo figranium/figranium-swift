@@ -29,7 +29,7 @@ private final class RecordingURLProtocol: URLProtocol, @unchecked Sendable {
     override func stopLoading() {}
 }
 
-@Suite("Figranium SDK") struct FigraniumTests {
+@Suite("Figranium SDK", .serialized) struct FigraniumTests {
     @Test func variableTemplateAndActionIDs() {
         #expect(variable("query") == "{$query}")
         let action = Actions.type("#search", value: variable("query"))
