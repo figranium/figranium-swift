@@ -115,7 +115,8 @@ private final class RecordingURLProtocol: URLProtocol, @unchecked Sendable {
         #expect(sessionList.first?.status == "200")
         #expect(keyList.first?.status == "200")
         #expect(full == .object(["rows": .array([.number(1)])]))
-        #expect(RecordingURLProtocol.requests.map { $0.url?.path } .prefix(3) == [
+        let paths = RecordingURLProtocol.requests.compactMap { $0.url?.path }
+        #expect(Array(paths.prefix(3)) == [
             "/api/executions", "/api/executions/list", "/api/executions/list"
         ])
         #expect(RecordingURLProtocol.requests.last?.url?.absoluteString.contains("run%2F1/result") == true)
