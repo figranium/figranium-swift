@@ -154,6 +154,8 @@ for try await execution in client.executions.watch("execution-id") {
 
 Use `client.browser.selectorStream()` to consume headful browser selector-picking events.
 
+`client.executions.list()` automatically selects the session endpoint for `.session` authentication and the `results:read` endpoint for API keys; `apiKeyRoute:` can override the choice. Recorded numeric HTTP statuses (such as 200) decode into `Execution.status` as strings for compatibility. Use `try await client.executions.getFullResult("execution-id")` to retrieve a retained complete result as `JSONValue`. API keys need `results:read` and access to that execution's Task.
+
 ## Error handling
 
 All transport, timeout, response, and API failures are represented by `FigraniumError`.
