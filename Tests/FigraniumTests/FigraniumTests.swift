@@ -16,11 +16,11 @@ private final class RecordingURLProtocol: URLProtocol, @unchecked Sendable {
         let path = request.url?.path ?? ""
         let body: String
         if path == "/api/executions" || path == "/api/executions/list" {
-            body = "{\\"executions\\":[{\\"id\\":\\"run-1\\",\\"timestamp\\":1,\\"status\\":200}]}"
+            body = #"{"executions":[{"id":"run-1","timestamp":1,"status":200}]}"#
         } else if path.hasSuffix("/result") {
-            body = "{\\"result\\":{\\"rows\\":[1]}}"
+            body = #"{"result":{"rows":[1]}}"#
         } else {
-            body = "{\\"ok\\":true}"
+            body = #"{"ok":true}"#
         }
         client?.urlProtocol(self, didLoad: Data(body.utf8))
         client?.urlProtocolDidFinishLoading(self)
