@@ -15,7 +15,11 @@ private final class RecordingURLProtocol: URLProtocol, @unchecked Sendable {
         client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
         let path = request.url?.path ?? ""
         let body: String
-        if path == "/api/executions" || path == "/api/executions/list" {
+        if path == "/api/tasks" {
+            body = #"[{"id":"task-1","name":"Session task","description":"A task"}]"#
+        } else if path == "/api/tasks/list" {
+            body = #"{"tasks":[{"id":"task-2","name":"API task"}]}"#
+        } else if path == "/api/executions" || path == "/api/executions/list" {
             body = #"{"executions":[{"id":"run-1","timestamp":1,"status":200}]}"#
         } else if path.hasSuffix("/result") {
             body = #"{"result":{"rows":[1]}}"#
@@ -95,6 +99,25 @@ private final class RecordingURLProtocol: URLProtocol, @unchecked Sendable {
         #expect(query?.first(where: { $0.name == "runId" })?.value == "run/1? & x")
         #expect(url.absoluteString.contains("runId=run"))
         _ = client.executions.stream(runID: "run/1? & x")
+    }
+
+    @Test func taskSummariesSelectSessionOrAPIKeyRoute() async throws {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [RecordingURLProtocol.self]
+        let session = URLSession(configuration: configuration)
+        defer { session.invalidateAndCancel() }
+        RecordingURLProtocol.requests = []
+
+        let url = URL(string: "http://localhost:11345")!
+        let workspace = Figranium(baseURL: url, authentication: .session, session: session)
+        let apiKey = Figranium(baseURL: url, authentication: .apiKey("secret"), session: session)
+        let sessionTasks = try await workspace.tasks.listSummaries()
+        let apiTasks = try await apiKey.tasks.listSummaries()
+
+        #expect(sessionTasks.first?.id == "task-1")
+        #expect(sessionTasks.first?.description == "A task")
+        #expect(apiTasks.first?.name == "API task")
+        #expect(RecordingURLProtocol.requests.compactMap { $0.url?.path } == ["/api/tasks", "/api/tasks/list"])
     }
 
     @Test func executionListAuthModeNumericStatusAndFullResult() async throws {
