@@ -140,10 +140,10 @@ For advanced fields, construct `Action` directly. `Task`, `Action`, `Schedule`, 
 
 ## Streams and execution watching
 
-Execution events are `AsyncThrowingStream`s and stop when their consuming task is cancelled.
+Execution events are `AsyncThrowingStream`s and stop when their consuming task is cancelled. The execution stream requires a workspace session and a run ID (`runID:`); an API key alone cannot open it.
 
 ```swift
-for try await event in client.executions.stream() {
+for try await event in client.executions.stream(runID: "run-id") {
     print(event.event ?? "message", event.data)
 }
 

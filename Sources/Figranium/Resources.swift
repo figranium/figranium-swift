@@ -74,8 +74,8 @@ public struct ExecutionsResource: Sendable { let client: Figranium
     public func clear(options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("POST", "/api/executions/clear", options: options) }
     /// Performs the stop operation.
     public func stop(runID: String, options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("POST", "/api/executions/stop", body: ["runId": runID], options: options) }
-    /// Opens a server-sent event stream for live Figranium updates.
-    public func stream(options: RequestOptions = .init()) -> AsyncThrowingStream<StreamEvent<JSONValue>, Error> { client.stream("/api/executions/stream", options: options) }
+    /// Streams events for a run. Requires a workspace session (not an API key).
+    public func stream(runID: String, options: RequestOptions = .init()) -> AsyncThrowingStream<StreamEvent<JSONValue>, Error> { client.stream("/api/executions/stream", query: ["runId": runID], options: options) }
     /// Polls an execution and emits updates until it reaches a terminal outcome.
     public func watch(_ executionID: String, interval: Duration = .seconds(1), options: RequestOptions = .init()) -> AsyncThrowingStream<Execution, Error> { AsyncThrowingStream { continuation in let task = Swift.Task { do { var lastStatus: String?; while !Swift.Task.isCancelled { let value = try await get(executionID, options: options); if value.status != lastStatus { continuation.yield(value); lastStatus = value.status }; if ["success", "error", "stopped", "crashed", "anti_bot"].contains(value.outcome ?? value.status ?? "") { continuation.finish(); return }; try await Swift.Task.sleep(for: interval) } } catch { continuation.finish(throwing: error) } }; continuation.onTermination = { _ in task.cancel() } } }
 }

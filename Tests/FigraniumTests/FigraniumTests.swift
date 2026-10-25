@@ -78,6 +78,16 @@ private final class RecordingURLProtocol: URLProtocol, @unchecked Sendable {
         #expect(RecordingURLProtocol.requests[1].url?.absoluteString == "http://localhost:11345/api/cookie-states/state%2F1")
     }
 
+    @Test func executionStreamURLPreservesRunIDQuery() throws {
+        let client = Figranium(baseURL: URL(string: "http://localhost:11345")!, authentication: .session)
+        let url = try client.makeURL("/api/executions/stream", query: ["runId": "run/1? & x"])
+        #expect(url.path == "/api/executions/stream")
+        let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
+        #expect(query?.first(where: { $0.name == "runId" })?.value == "run/1? & x")
+        #expect(url.absoluteString.contains("runId=run"))
+        _ = client.executions.stream(runID: "run/1? & x")
+    }
+
     @Test func jsonValueRoundTrip() throws {
         let original: JSONValue = .object(["items": .array([.number(1), .bool(true)])])
         #expect(try JSONDecoder().decode(JSONValue.self, from: JSONEncoder().encode(original)) == original)

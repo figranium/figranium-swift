@@ -50,13 +50,18 @@ public final class Figranium: @unchecked Sendable {
     func request<Value: Decodable & Sendable, Body: Encodable>(_ method: String, _ path: String, body: Body, query: [String: String] = [:], options: RequestOptions = .init()) async throws -> Value {
         try await requestInternal(method, path, body: try JSONEncoder().encode(body), query: query, options: options)
     }
-    private func requestInternal<Value: Decodable & Sendable>(_ method: String, _ path: String, body: Data?, query: [String: String], options: RequestOptions) async throws -> Value {
+    /// Build a request URL with correctly escaped query items (also used for SSE).
+    func makeURL(_ path: String, query: [String: String] = [:]) throws -> URL {
         var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)!
         let encodedPath = path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         let prefix = components.percentEncodedPath
         components.percentEncodedPath = (prefix.hasSuffix("/") ? prefix : prefix + "/") + encodedPath
         if !query.isEmpty { components.queryItems = query.compactMap { $0.value.isEmpty ? nil : URLQueryItem(name: $0.key, value: $0.value) } }
         guard let url = components.url else { throw FigraniumError(message: "Unable to construct Figranium request URL") }
+        return url
+    }
+    private func requestInternal<Value: Decodable & Sendable>(_ method: String, _ path: String, body: Data?, query: [String: String], options: RequestOptions) async throws -> Value {
+        let url = try makeURL(path, query: query)
         var request = URLRequest(url: url); request.httpMethod = method; request.timeoutInterval = options.timeout ?? timeout
         var headers = defaultHeaders; headers["accept"] = "application/json"; options.headers.forEach { headers[$0.key] = $0.value }
         if case let .apiKey(key, header) = authentication { headers[header] = header.lowercased() == "authorization" ? "Bearer \(key)" : key }
@@ -78,10 +83,10 @@ public final class Figranium: @unchecked Sendable {
         catch is CancellationError { throw FigraniumError(message: "Figranium request was cancelled", code: "REQUEST_ABORTED") }
         catch { throw FigraniumError(message: "Unable to reach the Figranium server", code: "NETWORK_ERROR") }
     }
-    func stream(_ path: String, options: RequestOptions = .init()) -> AsyncThrowingStream<StreamEvent<JSONValue>, Error> {
+    func stream(_ path: String, query: [String: String] = [:], options: RequestOptions = .init()) -> AsyncThrowingStream<StreamEvent<JSONValue>, Error> {
         AsyncThrowingStream { continuation in
             let task = Swift.Task { do {
-                var request = URLRequest(url: baseURL.appendingPathComponent(path.trimmingCharacters(in: CharacterSet(charactersIn: "/")))); request.timeoutInterval = options.timeout ?? 0; request.setValue("text/event-stream", forHTTPHeaderField: "accept")
+                var request = URLRequest(url: try makeURL(path, query: query)); request.timeoutInterval = options.timeout ?? 0; request.setValue("text/event-stream", forHTTPHeaderField: "accept")
                 if case let .apiKey(key, header) = authentication { request.setValue(header.lowercased() == "authorization" ? "Bearer \(key)" : key, forHTTPHeaderField: header) }
                 let (bytes, response) = try await session.bytes(for: request); guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else { throw FigraniumError(message: "Unable to open Figranium stream", code: "NETWORK_ERROR") }
                 var lines: [String] = []; for try await line in bytes.lines { if line.isEmpty { if let event = Self.sse(lines) { continuation.yield(event) }; lines = [] } else { lines.append(line) } }; if let event = Self.sse(lines) { continuation.yield(event) }; continuation.finish()
