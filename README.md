@@ -68,6 +68,8 @@ print(result.outcome ?? "unknown") // success | error | stopped | crashed | anti
 
 `baseURL` defaults to `http://localhost:11345`. API keys use `Authorization: Bearer`; set `apiKeyHeader: "x-api-key"` for deployments that expect that header.
 
+`tasks.listSummaries()` uses `/api/tasks/list` for API keys and `/api/tasks` for authenticated workspace sessions. Legacy AI selector/script-generation endpoints have been removed from Figranium and are not exposed by this SDK.
+
 ## Define a task in Swift
 
 Tasks can be built in the visual editor and invoked by ID, or defined in Swift and versioned alongside your application.
