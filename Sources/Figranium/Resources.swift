@@ -37,8 +37,15 @@ public struct CookieStatesResource: Sendable {
 public struct TasksResource: Sendable { let client: Figranium
     /// Performs the list operation.
     public func list(options: RequestOptions = .init()) async throws -> [Task] { try await client.request("GET", "/api/tasks", options: options) }
-    /// Performs the list summaries operation.
-    public func listSummaries(options: RequestOptions = .init()) async throws -> [TaskSummary] { struct Response: Codable, Sendable { let tasks: [TaskSummary] }; let response: Response = try await client.request("GET", "/api/tasks/list", options: options); return response.tasks }
+    /// Lists Task summaries through the endpoint supported by the authentication mode.
+    public func listSummaries(options: RequestOptions = .init()) async throws -> [TaskSummary] {
+        if case .session = client.authentication {
+            return try await client.request("GET", "/api/tasks", options: options)
+        }
+        struct Response: Codable, Sendable { let tasks: [TaskSummary] }
+        let response: Response = try await client.request("GET", "/api/tasks/list", options: options)
+        return response.tasks
+    }
     /// Performs the save operation.
     public func save(_ task: Task, createVersion: Bool = false, options: RequestOptions = .init()) async throws -> Task { try await client.request("POST", "/api/tasks", body: task, query: ["version": createVersion ? "true" : ""], options: options) }
     /// Performs the touch operation.
@@ -55,10 +62,6 @@ public struct TasksResource: Sendable { let client: Figranium
     public func clearVersions(_ id: String, options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("POST", "/api/tasks/\(pathID(id))/versions/clear", options: options) }
     /// Performs the rollback operation.
     public func rollback(_ id: String, versionID: String, options: RequestOptions = .init()) async throws -> Task { try await client.request("POST", "/api/tasks/\(pathID(id))/rollback", body: ["versionId": versionID], options: options) }
-    /// Performs the generate selector operation.
-    public func generateSelector(task: Task, actionIndex: Int, prompt: String, options: RequestOptions = .init()) async throws -> String { struct Response: Codable, Sendable { let selector: String }; struct Input: Codable { let task: Task; let actionIndex: Int; let prompt: String }; let response: Response = try await client.request("POST", "/api/tasks/generate-selector", body: Input(task: task, actionIndex: actionIndex, prompt: prompt), options: options); return response.selector }
-    /// Performs the generate script operation.
-    public func generateScript(_ description: String, options: RequestOptions = .init()) async throws -> String { struct Response: Codable, Sendable { let script: String }; let response: Response = try await client.request("POST", "/api/tasks/generate-script", body: ["description": description], options: options); return response.script }
     /// Executes a saved Figranium task and decodes its structured result.
     public func run<Value: Codable & Sendable>(_ id: String, input: ExecuteTaskOptions = .init(), options: RequestOptions = .init()) async throws -> ExecutionResult<Value> { try await client.request("POST", "/tasks/\(pathID(id))/api", body: input, options: options) }
 }
