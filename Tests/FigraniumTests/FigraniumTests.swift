@@ -97,6 +97,30 @@ private final class RecordingURLProtocol: URLProtocol, @unchecked Sendable {
         _ = client.executions.stream(runID: "run/1? & x")
     }
 
+    @Test func executionListAuthModeNumericStatusAndFullResult() async throws {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [RecordingURLProtocol.self]
+        let session = URLSession(configuration: configuration)
+        defer { session.invalidateAndCancel() }
+        RecordingURLProtocol.requests = []
+
+        let url = URL(string: "http://localhost:11345")!
+        let workspace = Figranium(baseURL: url, authentication: .session, session: session)
+        let apiKey = Figranium(baseURL: url, authentication: .apiKey("secret"), session: session)
+        let sessionList = try await workspace.executions.list()
+        let keyList = try await apiKey.executions.list()
+        _ = try await workspace.executions.list(apiKeyRoute: true)
+        let full = try await apiKey.executions.getFullResult("run/1")
+
+        #expect(sessionList.first?.status == "200")
+        #expect(keyList.first?.status == "200")
+        #expect(full == .object(["rows": .array([.number(1)])]))
+        #expect(RecordingURLProtocol.requests.map { $0.url?.path } .prefix(3) == [
+            "/api/executions", "/api/executions/list", "/api/executions/list"
+        ])
+        #expect(RecordingURLProtocol.requests.last?.url?.absoluteString.contains("run%2F1/result") == true)
+    }
+
     @Test func jsonValueRoundTrip() throws {
         let original: JSONValue = .object(["items": .array([.number(1), .bool(true)])])
         #expect(try JSONDecoder().decode(JSONValue.self, from: JSONEncoder().encode(original)) == original)
