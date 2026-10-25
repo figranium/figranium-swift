@@ -65,9 +65,22 @@ public struct TasksResource: Sendable { let client: Figranium
 /// API resource for executions operations.
 public struct ExecutionsResource: Sendable { let client: Figranium
     /// Performs the list operation.
-    public func list(apiKeyRoute: Bool = true, options: RequestOptions = .init()) async throws -> [Execution] { struct Response: Codable, Sendable { let executions: [Execution] }; let response: Response = try await client.request("GET", apiKeyRoute ? "/api/executions/list" : "/api/executions", options: options); return response.executions }
+    public func list(apiKeyRoute: Bool? = nil, options: RequestOptions = .init()) async throws -> [Execution] {
+        struct Response: Codable, Sendable { let executions: [Execution] }
+        let useAPIKeyRoute: Bool
+        if let apiKeyRoute { useAPIKeyRoute = apiKeyRoute }
+        else if case .session = client.authentication { useAPIKeyRoute = false }
+        else { useAPIKeyRoute = true }
+        let response: Response = try await client.request("GET", useAPIKeyRoute ? "/api/executions/list" : "/api/executions", options: options)
+        return response.executions
+    }
     /// Performs the get operation.
     public func get(_ id: String, options: RequestOptions = .init()) async throws -> Execution { struct Response: Codable, Sendable { let execution: Execution }; let response: Response = try await client.request("GET", "/api/executions/\(pathID(id))", options: options); return response.execution }
+    /// Fetches a retained complete result. API keys require results:read and access to the Task.
+    public func getFullResult(_ id: String, options: RequestOptions = .init()) async throws -> JSONValue {
+        let response: JSONObject = try await client.request("GET", "/api/executions/\(pathID(id))/result", options: options)
+        return response["result"] ?? .null
+    }
     /// Performs the delete operation.
     public func delete(_ id: String, options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("DELETE", "/api/executions/\(pathID(id))", options: options) }
     /// Performs the clear operation.
