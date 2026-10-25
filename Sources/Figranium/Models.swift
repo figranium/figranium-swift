@@ -219,12 +219,35 @@ public struct StreamEvent<Value: Sendable>: Sendable {
 
 /// A recorded Figranium execution.
 public struct Execution: Codable, Sendable {
-    /// The id value.
     public var id: String; public var timestamp: Double
-    /// The method value.
+    /// HTTP response status is numeric on the server; normalize it to a string for API compatibility.
     public var method, path, status, outcome: String?; public var durationMs: Double?
-    /// The source value.
     public var source, mode, taskId, taskName, url: String?; public var result: JSONValue?
+
+    private enum CodingKeys: String, CodingKey {
+        case id, timestamp, method, path, status, outcome, durationMs, source, mode, taskId, taskName, url, result
+    }
+
+    public init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        id = try values.decode(String.self, forKey: .id)
+        timestamp = try values.decode(Double.self, forKey: .timestamp)
+        method = try values.decodeIfPresent(String.self, forKey: .method)
+        path = try values.decodeIfPresent(String.self, forKey: .path)
+        if let code = try? values.decode(Int.self, forKey: .status) {
+            status = String(code)
+        } else {
+            status = try values.decodeIfPresent(String.self, forKey: .status)
+        }
+        outcome = try values.decodeIfPresent(String.self, forKey: .outcome)
+        durationMs = try values.decodeIfPresent(Double.self, forKey: .durationMs)
+        source = try values.decodeIfPresent(String.self, forKey: .source)
+        mode = try values.decodeIfPresent(String.self, forKey: .mode)
+        taskId = try values.decodeIfPresent(String.self, forKey: .taskId)
+        taskName = try values.decodeIfPresent(String.self, forKey: .taskName)
+        url = try values.decodeIfPresent(String.self, forKey: .url)
+        result = try values.decodeIfPresent(JSONValue.self, forKey: .result)
+    }
 }
 
 /// Represents task summary data used by the Figranium SDK.
