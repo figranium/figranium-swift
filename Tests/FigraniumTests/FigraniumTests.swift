@@ -171,6 +171,27 @@ private final class RecordingURLProtocol: URLProtocol, @unchecked Sendable {
         #expect(RecordingURLProtocol.requests.last?.url?.absoluteString.contains("run%2F1/result") == true)
     }
 
+    @Test func taskVersionDeletionUsesSessionAndEncodedIDs() async throws {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [RecordingURLProtocol.self]
+        let session = URLSession(configuration: configuration)
+        defer { session.invalidateAndCancel() }
+        RecordingURLProtocol.requests = []
+
+        let client = Figranium(
+            baseURL: URL(string: "http://localhost:11345")!,
+            authentication: .session,
+            session: session
+        )
+        let result = try await client.tasks.deleteVersion("task/1", versionID: "version/1")
+
+        #expect(result["ok"] == .bool(true))
+        #expect(RecordingURLProtocol.requests.count == 1)
+        #expect(RecordingURLProtocol.requests[0].httpMethod == "DELETE")
+        #expect(RecordingURLProtocol.requests[0].url?.absoluteString == "http://localhost:11345/api/tasks/task%2F1/versions/version%2F1")
+        #expect(RecordingURLProtocol.requests[0].value(forHTTPHeaderField: "X-Requested-With") == "XMLHttpRequest")
+    }
+
     @Test func jsonValueRoundTrip() throws {
         let original: JSONValue = .object(["items": .array([.number(1), .bool(true)])])
         #expect(try JSONDecoder().decode(JSONValue.self, from: JSONEncoder().encode(original)) == original)
