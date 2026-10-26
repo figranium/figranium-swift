@@ -187,6 +187,45 @@ public struct Task: Codable, Sendable, Equatable, Identifiable {
     public init(name: String, url: String, mode: String, description: String = "", actions: [Action]? = nil, variables: [String: TaskVariable]? = nil) {
         self.name = name; self.url = url; self.mode = mode; self.description = description; self.actions = actions; self.variables = variables
     }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, name, description, url, mode, wait, selector, rotateUserAgents, rotateProxies, rotateViewport, humanTyping, stealth, autoSolveCaptcha, translation, actions, variables, schedule, output, extractionScript, extractionFormat, includeHtml, includeShadowDom, disableRecording, statelessExecution, downloadCabinetId, cabinetId, cookieStateId
+    }
+
+    /// Decode Tasks from older and current Figranium servers without losing explicit fresh cookie-state selection.
+    public init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        name = try values.decode(String.self, forKey: .name)
+        description = try values.decodeIfPresent(String.self, forKey: .description) ?? ""
+        url = try values.decode(String.self, forKey: .url)
+        mode = try values.decode(String.self, forKey: .mode)
+        id = try values.decodeIfPresent(String.self, forKey: .id)
+        wait = try values.decodeIfPresent(Double.self, forKey: .wait)
+        selector = try values.decodeIfPresent(String.self, forKey: .selector)
+        rotateUserAgents = try values.decodeIfPresent(Bool.self, forKey: .rotateUserAgents)
+        rotateProxies = try values.decodeIfPresent(Bool.self, forKey: .rotateProxies)
+        rotateViewport = try values.decodeIfPresent(Bool.self, forKey: .rotateViewport)
+        humanTyping = try values.decodeIfPresent(Bool.self, forKey: .humanTyping)
+        stealth = try values.decodeIfPresent(StealthConfig.self, forKey: .stealth)
+        autoSolveCaptcha = try values.decodeIfPresent(Bool.self, forKey: .autoSolveCaptcha)
+        translation = try values.decodeIfPresent(TaskTranslation.self, forKey: .translation)
+        actions = try values.decodeIfPresent([Action].self, forKey: .actions)
+        variables = try values.decodeIfPresent([String: TaskVariable].self, forKey: .variables)
+        schedule = try values.decodeIfPresent(Schedule.self, forKey: .schedule)
+        output = try values.decodeIfPresent(TaskOutput.self, forKey: .output)
+        extractionScript = try values.decodeIfPresent(String.self, forKey: .extractionScript)
+        extractionFormat = try values.decodeIfPresent(String.self, forKey: .extractionFormat)
+        includeHtml = try values.decodeIfPresent(Bool.self, forKey: .includeHtml)
+        includeShadowDom = try values.decodeIfPresent(Bool.self, forKey: .includeShadowDom)
+        disableRecording = try values.decodeIfPresent(Bool.self, forKey: .disableRecording)
+        statelessExecution = try values.decodeIfPresent(Bool.self, forKey: .statelessExecution)
+        downloadCabinetId = try values.decodeIfPresent(String.self, forKey: .downloadCabinetId)
+        cabinetId = try values.decodeIfPresent(String.self, forKey: .cabinetId)
+        // decodeIfPresent would collapse JSON null and a missing key into the same nil.
+        cookieStateId = values.contains(.cookieStateId)
+            ? try values.decode(CookieStateSelection.self, forKey: .cookieStateId)
+            : nil
+    }
 }
 
 /// Represents execute task options data used by the Figranium SDK.
