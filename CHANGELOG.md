@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added session-only `tasks.deleteVersion(_:versionID:)` for Figranium v0.21 Task version deletion, with URL encoding and CSRF regression coverage.
 - Fixed Cabinet list decoding for the v0.21 API response (`{ defaultCabinetId, cabinets }`) while preserving the Swift `[Cabinet]` return type.
 - Fixed ZIP extraction decoding: the API returns one `CabinetItem`, not an `items` envelope.
 - Exposed `unuploadedCount` on Cabinet responses and added regression tests.

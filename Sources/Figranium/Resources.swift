@@ -58,6 +58,10 @@ public struct TasksResource: Sendable { let client: Figranium
     public func versions(_ id: String, options: RequestOptions = .init()) async throws -> [TaskVersion] { struct Response: Codable, Sendable { let versions: [TaskVersion] }; let response: Response = try await client.request("GET", "/api/tasks/\(pathID(id))/versions", options: options); return response.versions }
     /// Performs the version operation.
     public func version(_ id: String, versionID: String, options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("GET", "/api/tasks/\(pathID(id))/versions/\(pathID(versionID))", options: options) }
+    /// Deletes a saved Task version. Requires a workspace session.
+    public func deleteVersion(_ id: String, versionID: String, options: RequestOptions = .init()) async throws -> JSONObject {
+        try await client.request("DELETE", "/api/tasks/\(pathID(id))/versions/\(pathID(versionID))", options: options)
+    }
     /// Performs the clear versions operation.
     public func clearVersions(_ id: String, options: RequestOptions = .init()) async throws -> JSONObject { try await client.request("POST", "/api/tasks/\(pathID(id))/versions/clear", options: options) }
     /// Performs the rollback operation.
