@@ -72,6 +72,25 @@ private final class RecordingURLProtocol: URLProtocol, @unchecked Sendable {
         #expect(try JSONDecoder().decode(CookieStateSelection.self, from: Data("null".utf8)) == .fresh)
     }
 
+    @Test func taskDecodingPreservesExplicitFreshCookieStateAndOptionalDescription() throws {
+        let minimal = #"{"id":"task-1","name":"Minimal","url":"https://example.com","mode":"agent"}"#
+        let inherited = try JSONDecoder().decode(Task.self, from: Data(minimal.utf8))
+        #expect(inherited.description == "")
+        #expect(inherited.cookieStateId == nil)
+        let inheritedJSON = try JSONSerialization.jsonObject(with: JSONEncoder().encode(inherited)) as? [String: Any]
+        #expect(inheritedJSON?["cookieStateId"] == nil)
+
+        let fresh = #"{"id":"task-1","name":"Fresh","url":"https://example.com","mode":"agent","cookieStateId":null}"#
+        let decodedFresh = try JSONDecoder().decode(Task.self, from: Data(fresh.utf8))
+        #expect(decodedFresh.cookieStateId == .fresh)
+        let freshJSON = try JSONSerialization.jsonObject(with: JSONEncoder().encode(decodedFresh)) as? [String: Any]
+        #expect(freshJSON?["cookieStateId"] is NSNull)
+
+        let named = #"{"id":"task-1","name":"Named","url":"https://example.com","mode":"agent","cookieStateId":"login"}"#
+        let decodedNamed = try JSONDecoder().decode(Task.self, from: Data(named.utf8))
+        #expect(decodedNamed.cookieStateId == .named("login"))
+    }
+
     @Test func sessionCookieStatesPreserveEncodedIDsAndCSRFHint() async throws {
         #expect(pathID("state/1") == "state%2F1")
         let configuration = URLSessionConfiguration.ephemeral
