@@ -127,7 +127,7 @@ public struct CapturesResource: Sendable { let client: Figranium
 /// API resource for cabinets operations.
 public struct CabinetsResource: Sendable { let client: Figranium
     /// Performs the list operation.
-    public func list(options: RequestOptions = .init()) async throws -> [Cabinet] { try await client.request("GET", "/api/cabinets", options: options) }
+    public func list(options: RequestOptions = .init()) async throws -> [Cabinet] { struct Response: Codable, Sendable { let defaultCabinetId: String; let cabinets: [Cabinet] }; let response: Response = try await client.request("GET", "/api/cabinets", options: options); return response.cabinets }
     /// Performs the create operation.
     public func create(_ name: String, options: RequestOptions = .init()) async throws -> Cabinet { try await client.request("POST", "/api/cabinets", body: ["name": name], options: options) }
     /// Performs the rename operation.
@@ -145,7 +145,7 @@ public struct CabinetsResource: Sendable { let client: Figranium
     /// Performs the zip items operation.
     public func zipItems(_ cabinetID: String, itemIDs: [String], name: String? = nil, options: RequestOptions = .init()) async throws -> CabinetItem { struct Input: Codable { let itemIds: [String]; let name: String? }; return try await client.request("POST", "/api/cabinets/\(pathID(cabinetID))/zip", body: Input(itemIds: itemIDs, name: name), options: options) }
     /// Performs the unzip item operation.
-    public func unzipItem(_ cabinetID: String, itemID: String, options: RequestOptions = .init()) async throws -> [CabinetItem] { struct Response: Codable, Sendable { let items: [CabinetItem] }; let response: Response = try await client.request("POST", "/api/cabinets/\(pathID(cabinetID))/items/\(pathID(itemID))/unzip", options: options); return response.items }
+    public func unzipItem(_ cabinetID: String, itemID: String, options: RequestOptions = .init()) async throws -> CabinetItem { try await client.request("POST", "/api/cabinets/\(pathID(cabinetID))/items/\(pathID(itemID))/unzip", options: options) }
     /// Performs the download url operation.
     public func downloadURL(cabinetID: String, itemID: String) -> URL { client.baseURL.appendingPathComponent("api/cabinets/\(pathID(cabinetID))/items/\(pathID(itemID))/download") }
 }

@@ -21,6 +21,10 @@ private final class RecordingURLProtocol: URLProtocol, @unchecked Sendable {
             body = #"{"tasks":[{"id":"task-2","name":"API task"}]}"#
         } else if path == "/api/executions" || path == "/api/executions/list" {
             body = #"{"executions":[{"id":"run-1","timestamp":1,"status":200}]}"#
+        } else if path == "/api/cabinets" {
+            body = #"{"defaultCabinetId":"cab_basic","cabinets":[{"id":"cab_basic","name":"Basic Cabinet","isDefault":true,"itemCount":2,"unuploadedCount":1,"createdAt":123}]}"#
+        } else if path.hasSuffix("/unzip") {
+            body = #"{"id":"item-2","name":"extracted","kind":"folder","status":"unuploaded","size":42,"createdAt":456}"#
         } else if path.hasSuffix("/result") {
             body = #"{"result":{"rows":[1]}}"#
         } else {
@@ -89,6 +93,28 @@ private final class RecordingURLProtocol: URLProtocol, @unchecked Sendable {
         #expect(RecordingURLProtocol.requests[0].value(forHTTPHeaderField: "X-Requested-With") == "XMLHttpRequest")
         #expect(RecordingURLProtocol.requests[1].value(forHTTPHeaderField: "X-Requested-With") == "XMLHttpRequest")
         #expect(RecordingURLProtocol.requests[1].url?.absoluteString == "http://localhost:11345/api/cookie-states/state%2F1")
+    }
+
+    @Test func cabinetListAndUnzipDecodeCoreV021Responses() async throws {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [RecordingURLProtocol.self]
+        let session = URLSession(configuration: configuration)
+        defer { session.invalidateAndCancel() }
+        RecordingURLProtocol.requests = []
+
+        let client = Figranium(baseURL: URL(string: "http://localhost:11345")!, authentication: .session, session: session)
+        let cabinets = try await client.cabinets.list()
+        #expect(cabinets.count == 1)
+        #expect(cabinets.first?.id == "cab_basic")
+        #expect(cabinets.first?.unuploadedCount == 1)
+
+        let extracted = try await client.cabinets.unzipItem("cab_basic", itemID: "item-1")
+        #expect(extracted.id == "item-2")
+        #expect(extracted.kind == "folder")
+        #expect(extracted.size == 42)
+        #expect(RecordingURLProtocol.requests.compactMap { $0.url?.path } == [
+            "/api/cabinets", "/api/cabinets/cab_basic/items/item-1/unzip"
+        ])
     }
 
     @Test func executionStreamURLPreservesRunIDQuery() throws {

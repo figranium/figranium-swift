@@ -255,7 +255,7 @@ public struct TaskSummary: Codable, Sendable { public var id, name: String; publ
 /// Represents task version data used by the Figranium SDK.
 public struct TaskVersion: Codable, Sendable { public var id: String; public var timestamp: Double; public var name, mode: String? }
 /// Represents cabinet data used by the Figranium SDK.
-public struct Cabinet: Codable, Sendable { public var id, name: String; public var isDefault: Bool?; public var itemCount: Int?; public var createdAt: Double? }
+public struct Cabinet: Codable, Sendable { public var id, name: String; public var isDefault: Bool?; public var itemCount, unuploadedCount: Int?; public var createdAt: Double? }
 /// Represents cabinet item data used by the Figranium SDK.
 public struct CabinetItem: Codable, Sendable { public var id, name, kind, status: String; public var size: Int?; public var createdAt: Double?; public var sourceTaskId, sourceRunId: String? }
 /// Represents capture data used by the Figranium SDK.
