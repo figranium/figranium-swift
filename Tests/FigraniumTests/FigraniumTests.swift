@@ -22,9 +22,9 @@ private final class RecordingURLProtocol: URLProtocol, @unchecked Sendable {
         } else if path == "/api/executions" || path == "/api/executions/list" {
             body = #"{"executions":[{"id":"run-1","timestamp":1,"status":200}]}"#
         } else if path == "/api/cabinets" {
-            body = #"{\"defaultCabinetId\":\"cab_basic\",\"cabinets\":[{\"id\":\"cab_basic\",\"name\":\"Basic Cabinet\",\"isDefault\":true,\"itemCount\":2,\"unuploadedCount\":1,\"createdAt\":123}]}"#
+            body = #"{"defaultCabinetId":"cab_basic","cabinets":[{"id":"cab_basic","name":"Basic Cabinet","isDefault":true,"itemCount":2,"unuploadedCount":1,"createdAt":123}]}"#
         } else if path.hasSuffix("/unzip") {
-            body = #"{\"id\":\"item-2\",\"name\":\"extracted\",\"kind\":\"folder\",\"status\":\"unuploaded\",\"size\":42,\"createdAt\":456}"#
+            body = #"{"id":"item-2","name":"extracted","kind":"folder","status":"unuploaded","size":42,"createdAt":456}"#
         } else if path.hasSuffix("/result") {
             body = #"{"result":{"rows":[1]}}"#
         } else {
