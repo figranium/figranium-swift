@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Fixed Cabinet list decoding for the v0.21 API response (`{ defaultCabinetId, cabinets }`) while preserving the Swift `[Cabinet]` return type.
+- Fixed ZIP extraction decoding: the API returns one `CabinetItem`, not an `items` envelope.
+- Exposed `unuploadedCount` on Cabinet responses and added regression tests.
+
 ## [0.4.0] - 2026-10-09
 
 - Removed remote authentication, credentials, settings, and interactive browser administration resources.
