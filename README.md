@@ -119,6 +119,27 @@ statefulTask.output = TaskOutput(
 
 The legacy `statelessExecution` option is deprecated. Scoped API keys must have the appropriate Task permissions and cannot bypass their Task allowlists.
 
+### Scoped API keys (v0.21+)
+
+Manage Task-allowlisted keys only through an authenticated workspace session. Provide a `URLSession` containing your existing workspace cookie; the SDK does not log in for you:
+
+```swift
+let admin = Figranium(
+    baseURL: URL(string: "https://figranium.example")!,
+    authentication: .session,
+    session: authenticatedURLSession
+)
+let created = try await admin.apiKeys.create(.init(
+    permissions: [.tasksRun], name: "CI runner", taskIds: ["task-123"]
+))
+let oneTimeSecret = created.secret // Store securely; never returned again.
+let listed = try await admin.apiKeys.list()
+let renamed = try await admin.apiKeys.rename(created.key.id, name: "Production runner")
+let revoked = try await admin.apiKeys.revoke(created.key.id)
+```
+
+Permissions are `tasks:read`, `tasks:run`, and `tasks:manage`. An omitted or empty `taskIds` allowlist means **all Tasks**. `legacySecret` from `list()` may contain an existing plaintext key; treat it as sensitive. Calls reject API-key or unauthenticated clients locally; session mutations include the CSRF hint.
+
 ## Action builders
 
 `Actions` supports navigation, clicks, forms, extraction, control flow, HTTP, CAPTCHA handling, and cabinet uploads:
@@ -187,6 +208,7 @@ let tasks = try await client.tasks.list(
 | --- | --- |
 | `tasks` | Save, update, delete, version, generate, and execute tasks |
 | `cookieStates` | Session-only list/get/create/rename/update/delete named browser storage states |
+| `apiKeys` | Session-only scoped API-key list/create/rename/revoke (v0.21+) |
 | `executions` | List, inspect, stop, delete, clear, stream, and watch runs |
 | `schedules` | Configure, describe, disable, and inspect schedules |
 | `captures` | List/delete recordings and screenshots |
@@ -224,7 +246,7 @@ let _: JSONObject = try await client.cookieStates.create(
 )
 ```
 
-The SDK does not perform interactive login or acquire workspace cookies. It adds a CSRF hint to session-authenticated mutations when no Origin or Referer is supplied. Scoped API keys cannot administer cookie states. Manage settings, scoped API keys, 1Password credentials, Baserow connections, imports/exports, and Cloud sign-in in the Figranium workspace UI. The Swift SDK does not expose a `settings` resource; Task-allowlisted keys cannot access unrelated global resources.
+The SDK does not perform interactive login or acquire workspace cookies. It adds a CSRF hint to session-authenticated mutations when no Origin or Referer is supplied. Scoped API keys cannot administer cookie states. Manage settings, 1Password credentials, Baserow connections, imports/exports, and Cloud sign-in in the Figranium workspace UI. Scoped API keys can be administered through `apiKeys` with a workspace session. The Swift SDK does not expose a `settings` resource; Task-allowlisted keys cannot access unrelated global resources.
 
 ## App Intents and Shortcuts
 
