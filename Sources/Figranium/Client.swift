@@ -12,6 +12,15 @@ public struct FigraniumError: Error, Sendable, LocalizedError {
 /// Authentication methods supported by the Figranium client.
 public enum FigraniumAuthentication: Sendable { case apiKey(String, header: String = "authorization"), session, none }
 
+/// Blocks URLSession's automatic redirects so custom API-key headers cannot
+/// be forwarded to a different origin. A session-level delegate is required:
+/// per-task delegates do not reliably suppress redirects on all platforms.
+final class RejectRedirectsDelegate: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
+        completionHandler(nil)
+    }
+}
+
 /// Client for connecting to a self-hosted Figranium instance.
 public final class Figranium: @unchecked Sendable {
     let baseURL: URL; let authentication: FigraniumAuthentication; let defaultHeaders: [String: String]; let timeout: TimeInterval; let session: URLSession
@@ -28,7 +37,10 @@ public final class Figranium: @unchecked Sendable {
     /// Creates a new Figranium.
     public init(baseURL: URL = URL(string: "http://localhost:11345")!, authentication: FigraniumAuthentication = .none, headers: [String: String] = [:], timeout: TimeInterval = 30, session: URLSession = .shared) {
         precondition(["http", "https"].contains(baseURL.scheme?.lowercased()), "baseURL must use http or https")
-        self.baseURL = baseURL; self.authentication = authentication; self.defaultHeaders = headers; self.timeout = timeout; self.session = session
+        self.baseURL = baseURL; self.authentication = authentication; self.defaultHeaders = headers; self.timeout = timeout
+        // Preserve the caller's session configuration (including custom URLProtocol
+        // classes) while enforcing a non-redirecting delegate for all requests.
+        self.session = URLSession(configuration: session.configuration, delegate: RejectRedirectsDelegate(), delegateQueue: nil)
     }
     /// Creates a new Figranium.
     public convenience init(baseURL: String = "http://localhost:11345", apiKey: String? = nil, apiKeyHeader: String = "authorization", timeout: TimeInterval = 30) {
@@ -76,6 +88,7 @@ public final class Figranium: @unchecked Sendable {
         do {
             let (data, response) = try await session.data(for: request)
             guard let http = response as? HTTPURLResponse else { throw FigraniumError(message: "Figranium returned an invalid response", code: "NETWORK_ERROR") }
+            if 300..<400 ~= http.statusCode { throw FigraniumError(message: "Refusing HTTP redirect for a Figranium request", status: http.statusCode, code: "REDIRECT_NOT_ALLOWED") }
             guard 200..<300 ~= http.statusCode else { throw error(from: data, response: http) }
             if data.isEmpty || http.statusCode == 204 { throw FigraniumError(message: "Figranium returned an empty response", status: http.statusCode, code: "EMPTY_RESPONSE") }
             return try JSONDecoder().decode(Value.self, from: data)
@@ -88,7 +101,9 @@ public final class Figranium: @unchecked Sendable {
             let task = Swift.Task { do {
                 var request = URLRequest(url: try makeURL(path, query: query)); request.timeoutInterval = options.timeout ?? 0; request.setValue("text/event-stream", forHTTPHeaderField: "accept")
                 if case let .apiKey(key, header) = authentication { request.setValue(header.lowercased() == "authorization" ? "Bearer \(key)" : key, forHTTPHeaderField: header) }
-                let (bytes, response) = try await session.bytes(for: request); guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else { throw FigraniumError(message: "Unable to open Figranium stream", code: "NETWORK_ERROR") }
+                let (bytes, response) = try await session.bytes(for: request)
+                if let http = response as? HTTPURLResponse, 300..<400 ~= http.statusCode { throw FigraniumError(message: "Refusing HTTP redirect for a Figranium stream", status: http.statusCode, code: "REDIRECT_NOT_ALLOWED") }
+                guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else { throw FigraniumError(message: "Unable to open Figranium stream", code: "NETWORK_ERROR") }
                 var lines: [String] = []; for try await line in bytes.lines { if line.isEmpty { if let event = Self.sse(lines) { continuation.yield(event) }; lines = [] } else { lines.append(line) } }; if let event = Self.sse(lines) { continuation.yield(event) }; continuation.finish()
             } catch { continuation.finish(throwing: error) } }
             continuation.onTermination = { _ in task.cancel() }
