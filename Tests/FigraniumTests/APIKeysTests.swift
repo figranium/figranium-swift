@@ -12,13 +12,13 @@ private final class APIKeyURLProtocol: URLProtocol, @unchecked Sendable {
         let body: String
         switch request.httpMethod {
         case "GET":
-            body = #"{\"keys\":[],\"legacySecret\":null,\"permissions\":[\"tasks:read\",\"tasks:run\",\"tasks:manage\"]}"#
+            body = #"{"keys":[],"legacySecret":null,"permissions":["tasks:read","tasks:run","tasks:manage"]}"#
         case "POST":
-            body = #"{\"key\":{\"id\":\"key/1\",\"name\":\"Runner\",\"permissions\":[\"tasks:run\"],\"taskIds\":[\"task-1\"],\"createdAt\":\"2026-10-30T00:00:00Z\"},\"secret\":\"once\"}"#
+            body = #"{"key":{"id":"key/1","name":"Runner","permissions":["tasks:run"],"taskIds":["task-1"],"createdAt":"2026-10-30T00:00:00Z"},"secret":"once"}"#
         case "PATCH":
-            body = #"{\"key\":{\"id\":\"key/1\",\"name\":\"Production\",\"permissions\":[\"tasks:run\"],\"taskIds\":[\"task-1\"],\"createdAt\":\"2026-10-30T00:00:00Z\"}}"#
+            body = #"{"key":{"id":"key/1","name":"Production","permissions":["tasks:run"],"taskIds":["task-1"],"createdAt":"2026-10-30T00:00:00Z"}}"#
         default:
-            body = #"{\"ok\":true}"#
+            body = #"{"ok":true}"#
         }
         let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: ["content-type": "application/json"])!
         client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
