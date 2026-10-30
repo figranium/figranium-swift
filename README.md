@@ -291,3 +291,7 @@ swift test
 ## License
 
 Apache-2.0
+
+## Authenticated redirects
+
+Authenticated API requests and execution streams reject HTTP redirects to prevent API keys, including `x-api-key`, from being forwarded to another origin. Configure the final server URL directly. Custom `URLSession` configurations and `URLProtocol` classes are preserved, but their session delegate is replaced with a redirect-blocking delegate.
